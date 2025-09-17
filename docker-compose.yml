@@ -1,0 +1,60 @@
+services:
+  # The Laravel application container
+  sendportal:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    image: sendportal:latest
+    container_name: sendportal_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - 'sendportal-data:/var/www/html'
+      - 'sendportal-storage:/var/www/html/storage'
+    depends_on:
+      - sendportal_db
+      - sendportal_redis
+    # The Nginx container to serve the application
+  sendportal_nginx:
+    image: nginx:alpine
+    container_name: sendportal_nginx
+    restart: unless-stopped
+    ports:
+      - '9001:80'
+    volumes:
+      - 'sendportal-data:/var/www/html'
+      - './docker/nginx.conf:/etc/nginx/conf.d/default.conf'
+    depends_on:
+      - sendportal
+
+  # The Redis container for caching and queues
+  sendportal_redis:
+    image: redis:7.2-alpine
+    container_name: sendportal_redis
+    restart: unless-stopped
+    volumes:
+      - 'sendportal-redis-data:/data'
+
+  # The MySQL database container
+  sendportal_db:
+    image: mysql:8.0
+    container_name: sendportal_db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+    volumes:
+      - 'sendportal-db-data:/var/lib/mysql'
+      - './database/init:/docker-entrypoint-initdb.d' # For importing SQL files
+
+# Named volumes to persist data
+volumes:
+  sendportal-data:
+  sendportal-db-data: 
+  sendportal-redis-data:
+  sendportal-storage:
