@@ -21,7 +21,7 @@ services:
     container_name: sendportal_nginx
     restart: unless-stopped
     ports:
-      - '9001:80'
+      - '9002:80'
     volumes:
       - 'sendportal-data:/var/www/html'
       - './docker/nginx.conf:/etc/nginx/conf.d/default.conf'
