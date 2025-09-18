@@ -34,7 +34,7 @@ RUN apk update && apk upgrade && \
     apk add --no-cache \
     nginx \
     supervisor \
-    # cron \
+    cronie \
     mysql-client \
     git \
     libxml2-dev \
@@ -73,9 +73,9 @@ RUN chown -R www-data:www-data /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
 
 # Add cron jobs for Laravel scheduler and Sendportal campaign dispatch
-RUN echo '* * * * * www-data php /var/www/html/artisan schedule:run >> /dev/null 2>&1' >> /etc/crontabs/www-data \
-    && echo '* * * * * www-data php /var/www/html/artisan sp:campaigns:dispatch >> /dev/null 2>&1' >> /etc/crontabs/www-data \
-    && chmod 0644 /etc/crontabs/www-data
+# RUN echo '* * * * * www-data php /var/www/html/artisan schedule:run >> /dev/null 2>&1' >> /etc/crontabs/www-data \
+#     && echo '* * * * * www-data php /var/www/html/artisan sp:campaigns:dispatch >> /dev/null 2>&1' >> /etc/crontabs/www-data \
+#     && chmod 0644 /etc/crontabs/www-data
     
 # Copy Supervisor and PHP configurations
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
