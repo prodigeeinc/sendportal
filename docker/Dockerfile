@@ -9,7 +9,7 @@ RUN --mount=type=cache,target=/.composer/cache composer install --no-autoloader 
     --no-scripts \
     --prefer-dist
 COPY . /app/
-RUN composer dump-autoload
+RUN composer dump-autoload --ignore-platform-reqs
 
 
 # FROM node:22-alpine as frontend
@@ -76,13 +76,14 @@ RUN chown -R www-data:www-data /var/www/html/storage \
 # RUN echo '* * * * * www-data php /var/www/html/artisan schedule:run >> /dev/null 2>&1' >> /etc/crontabs/www-data \
 #     && echo '* * * * * www-data php /var/www/html/artisan sp:campaigns:dispatch >> /dev/null 2>&1' >> /etc/crontabs/www-data \
 #     && chmod 0644 /etc/crontabs/www-data
-    
+
 # Copy Supervisor and PHP configurations
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/php.ini
 COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Expose port for Nginx
 EXPOSE 9000
 
-# Command to start supervisor
-CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
