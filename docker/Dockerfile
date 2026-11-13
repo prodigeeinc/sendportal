@@ -29,8 +29,9 @@ RUN composer dump-autoload --ignore-platform-reqs
 
 FROM php:8.4-fpm-alpine AS production
 
-# Install system dependencies
-RUN apk update && apk upgrade && \
+# Install system dependencies (MySQL-only; skip postgresql-dev — Alpine
+# apk upgrade + postgresql-dev often breaks Dokploy/CI with missing libpq-dev).
+RUN apk update && \
     apk add --no-cache \
     nginx \
     supervisor \
@@ -39,7 +40,6 @@ RUN apk update && apk upgrade && \
     git \
     libxml2-dev \
     libzip-dev \
-    postgresql-dev \
     libjpeg-turbo-dev \
     libpng-dev \
     icu-dev \
@@ -49,7 +49,7 @@ RUN apk update && apk upgrade && \
     imagemagick-dev
 
 # Install PHP extensions
-RUN docker-php-ext-install -j$(nproc) intl opcache zip pdo pdo_mysql pdo_pgsql mysqli exif pcntl posix
+RUN docker-php-ext-install -j$(nproc) intl opcache zip pdo pdo_mysql mysqli exif pcntl posix
 
 # Enable opcache
 # COPY --from=composer /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini /usr/local/etc/php/conf.d/
