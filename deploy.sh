@@ -1,36 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env sh
+set -eu
 
-set -e  # Exit on error
+cd "$(dirname "$0")"
 
-# ===== CONFIG =====
-COMPOSE_FILE="docker-compose.yml"
-APP_SERVICE="sendportal"
-CONTAINER_NAME="sendportal_app"
+echo "[deploy] Building and starting stack (waits for healthy services)..."
+docker compose up -d --build --wait
 
-# ===== BUILD & START CONTAINERS =====
-echo "📦 Building and starting containers..."
-docker compose -f $COMPOSE_FILE up -d --build
+echo "[deploy] sendportal_deploy logs:"
+docker compose logs --no-color sendportal_deploy | tail -n 100
 
-# ===== WAIT FOR APP CONTAINER =====
-echo "⏳ Waiting for app container to be ready..."
-sleep 10
+cid="$(docker compose ps -aq sendportal_deploy)"
+if [ -z "$cid" ]; then
+  echo "[deploy] sendportal_deploy container not found" >&2
+  exit 1
+fi
 
-# Optional: wait until container is healthy (better approach)
-# until docker exec $CONTAINER_NAME php -v >/dev/null 2>&1; do
-#   echo "Waiting for PHP container..."
-#   sleep 2
-# done
+exit_code="$(docker inspect -f '{{.State.ExitCode}}' "$cid")"
+if [ "$exit_code" != "0" ]; then
+  echo "[deploy] sendportal_deploy failed with exit code ${exit_code}" >&2
+  exit "$exit_code"
+fi
 
-# ===== RUN LARAVEL COMMANDS =====
-echo "⚙️ Running Laravel post-install commands..."
-
-docker exec -it $CONTAINER_NAME php artisan config:clear
-docker exec -it $CONTAINER_NAME php artisan cache:clear
-
-# Publish package assets 
-docker exec -it $CONTAINER_NAME php artisan vendor:publish --provider=Sendportal\\Base\\SendportalBaseServiceProvider
-
-# Example: run migrations if needed
-docker exec -it $CONTAINER_NAME php artisan migrate --force
-
-echo "✅ Deployment complete!" 
+echo "[deploy] Deployment complete"

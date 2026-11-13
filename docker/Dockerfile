@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:experimental
-FROM composer:2.4 AS composer
+FROM composer:2 AS composer
 WORKDIR /app
 COPY --chown=www-data composer.json /app/
 RUN --mount=type=cache,target=/.composer/cache composer install --no-autoloader --no-scripts \
@@ -27,7 +27,7 @@ RUN composer dump-autoload --ignore-platform-reqs
 #     npm run build --no-progress
 
 
-FROM php:8.3-fpm-alpine as production
+FROM php:8.4-fpm-alpine AS production
 
 # Install system dependencies
 RUN apk update && apk upgrade && \
@@ -82,7 +82,8 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/php.ini
 COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+COPY docker/sendportal-deploy.sh /usr/local/bin/sendportal-deploy.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/sendportal-deploy.sh
 # Expose port for Nginx
 EXPOSE 9000
 
