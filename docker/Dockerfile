@@ -72,6 +72,16 @@ RUN chown -R www-data:www-data /var/www/html/storage \
     && chown -R www-data:www-data /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/bootstrap/cache
 
+# Bake Mix assets into the image so nginx (separate container, same image)
+# can serve public/vendor/sendportal without a shared public volume.
+RUN APP_ENV=production \
+    APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
+    php artisan vendor:publish \
+      --provider="Sendportal\\Base\\SendportalBaseServiceProvider" \
+      --tag=sendportal-assets \
+      --force \
+      --no-interaction
+
 # Add cron jobs for Laravel scheduler and Sendportal campaign dispatch
 # RUN echo '* * * * * www-data php /var/www/html/artisan schedule:run >> /dev/null 2>&1' >> /etc/crontabs/www-data \
 #     && echo '* * * * * www-data php /var/www/html/artisan sp:campaigns:dispatch >> /dev/null 2>&1' >> /etc/crontabs/www-data \

@@ -20,12 +20,6 @@ echo "[deploy] Clearing config and cache..."
 php artisan config:clear --no-interaction
 php artisan cache:clear --no-interaction
 
-echo "[deploy] Publishing Sendportal assets..."
-php artisan vendor:publish \
-  --provider="Sendportal\\Base\\SendportalBaseServiceProvider" \
-  --force \
-  --no-interaction
-
 echo "[deploy] Running migrations..."
 php artisan migrate --force --no-interaction
 
